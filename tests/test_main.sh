@@ -75,17 +75,17 @@ fi
 test_qc() {
     autopep8 --exclude pylib --diff -r . --global-config .pep8 | tee check_autopep8
     test ! -s check_autopep8
-    assertEquals 0 $?
-
+    ${_ASSERT_EQUALS_} '"autopep8 status code"' '"0"' '"$?"'
+    
     flake8 $(find . -name "*.py" | grep -v pylib)
-    assertEquals 0 $?
+    ${_ASSERT_EQUALS_} '"0"' '"$?"'
 }
 
 test_empty_list() {
     # There should  be nothing in MPIENV_VERSIONS_DIR
     mpienv list
     local LEN=$(mpienv list | wc -c)
-    assertEquals 0 $LEN
+    ${_ASSERT_EQUALS_} '"0"' '"$LEN"'
 }
 
 test_1mpi() {
@@ -94,36 +94,36 @@ test_1mpi() {
     install_mpich
 
     mpienv list | grep -q ${MPICH}
-    assertEquals 0 $?
+    ${_ASSERT_EQUALS_} '"0"' '"$?"'
 
     # Test json output
     mpienv list --json | python -c "import json;import sys; json.load(sys.stdin)"
-    assertEquals 0 $?
+    ${_ASSERT_EQUALS_} '"0"' '"$?"'
 
 
     # Test rename
     # rename ${MPICH} -> my-cool-mpi
     mpienv rename ${MPICH} my-cool-mpi
-    assertTrue "$?"
+    ${_ASSERT_TRUE_} '$?'
     mpienv list | grep -qE 'my-cool-mpi'
-    assertTrue "$?"
+    ${_ASSERT_TRUE_} '$?'
 
     mpienv list | grep -qE ${MPICH}
-    assertFalse "$?"
+    ${_ASSERT_FALSE_} '$?'
 
     # Rename back to ${MPICH}
     mpienv rename my-cool-mpi ${MPICH}
     mpienv list | grep -qE ${MPICH}
-    assertTrue "$?"
+    ${_ASSERT_TRUE_} '$?'
 
     # Remove ${MPICH}
     install_ompi
     mpienv use ${OMPI}
     mpienv rm ${MPICH}
-    assertTrue "$?"
+    ${_ASSERT_TRUE_} '$?'
 
     mpienv list | grep -q ${MPICH}
-    assertFalse "$?"
+    ${_ASSERT_FALSE_} '$?'
 }
 
 test_2mpis() {
@@ -131,10 +131,10 @@ test_2mpis() {
     install_ompi
 
     mpienv list | grep -qE ${MPICH}
-    assertTrue "$?"
+    ${_ASSERT_TRUE_} '$?'
 
     mpienv list | grep -qE "${OMPI}"
-    assertTrue "$?"
+    ${_ASSERT_TRUE_} '"$?"'
 }
 
 get_key() {
@@ -156,22 +156,22 @@ test_info() {
     mpienv info --json >b.json
 
     diff -q a.json b.json >/dev/null
-    assertTrue "$?"
+    ${_ASSERT_TRUE_} '$?'
 
     rm -f a.json b.json
 
-    assertEquals "False" $(mpienv info --json | get_key "broken")
-    assertEquals "MPICH" $(mpienv info --json | get_key "type")
-    assertEquals "3.2"   $(mpienv info --json | get_key "version")
-    assertTrue $(mpienv info --json | has_key "symlink")
-    assertTrue $(mpienv info --json | has_key "mpiexec")
-    assertTrue $(mpienv info --json | has_key "mpicc")
-    assertTrue $(mpienv info --json | has_key "mpicxx")
-    assertTrue $(mpienv info --json | has_key "default_name")
-    assertTrue $(mpienv info --json | has_key "prefix")
+    ${_ASSERT_EQUALS_} 'False' '$(mpienv info --json | get_key "broken")'
+    ${_ASSERT_EQUALS_} 'MPICH' '$(mpienv info --json | get_key "type")'
+    ${_ASSERT_EQUALS_} '3.2'   '$(mpienv info --json | get_key "version")'
+    ${_ASSERT_TRUE_} '$(mpienv info --json | has_key "symlink")'
+    ${_ASSERT_TRUE_} '$(mpienv info --json | has_key "mpiexec")'
+    ${_ASSERT_TRUE_} '$(mpienv info --json | has_key "mpicc")'
+    ${_ASSERT_TRUE_} '$(mpienv info --json | has_key "mpicxx")'
+    ${_ASSERT_TRUE_} '$(mpienv info --json | has_key "default_name")'
+    ${_ASSERT_TRUE_} '$(mpienv info --json | has_key "prefix")'
 
     test -d "$(mpienv prefix)"
-    assertTrue "$?"
+    ${_ASSERT_TRUE_} '$?'
 }
 
 test_mpi4py() {
@@ -195,17 +195,17 @@ EOF
     
     mpienv use --mpi4py ${MPICH}
     mpienv exec -n 2 python -c "from mpi4py import MPI"
-    assertTrue $?
+    ${_ASSERT_TRUE_} '$?'
     OUT=$(mpienv use --mpi4py ${MPICH}; mpienv exec -n 2 python $SCRIPT)
-    assertEquals "01" "$OUT"
+    ${_ASSERT_EQUALS_} '01' '$OUT'
 
     # test Open MPI
     install_ompi
     mpienv use --mpi4py ${OMPI}
     mpienv exec -n 2 python -c "from mpi4py import MPI"
-    assertTrue $?
+    ${_ASSERT_TRUE_} '$?'
     OUT=$(mpienv use --mpi4py ${OMPI}; mpienv exec -n 2 python $SCRIPT)
-    assertEquals "01" "$OUT"
+    ${_ASSERT_EQUALS_} '01' '$OUT'
     
     rm -f ${SCRIPT}
 }
@@ -214,16 +214,16 @@ test_mpi4py_clear_pypath() {
     install_mpich
 
     unset PYTHONPATH
-    assertNull "${PYTHONPATH:-}"
+    ${_ASSERT_NULL_} '"${PYTHONPATH:-}"'
 
     mpienv use ${MPICH}
-    assertNull "${PYTHONPATH:-}"
+    ${_ASSERT_NULL_} '"${PYTHONPATH:-}"'
 
     mpienv use --mpi4py ${MPICH}
-    assertNotNull "${PYTHONPATH:-}"
+    ${_ASSERT_NOT_NULL_} '"${PYTHONPATH:-}"'
 
     mpienv use ${MPICH}
-    assertNull "${PYTHONPATH:-}"
+    ${_ASSERT_NULL_} '"PYTHONPATH must be cleared"' '"${PYTHONPATH:-}"'
 }
 
 test_reg_issue10(){
@@ -237,12 +237,12 @@ test_reg_issue10(){
 
     # If the `use` command does not run `pip install mpi4py`,
     # which is a correct behavior, E-S should be < 1 [s].
-    assertEquals "\$OUT must be empty" "$OUT" ""
+    ${_ASSERT_EQUALS_} '"\$OUT must be empty"' '"$OUT"' '""'
 }
 
 #suite() {
-#    suite_addTest "test_reg_issue10"
-#    #suite_addTest "test_mpi4py_clear_pypath"
+    #suite_addTest "test_reg_issue10"
+    #suite_addTest "test_mpi4py_clear_pypath"
 #}
 
 
