@@ -40,7 +40,6 @@ addons:
     packages:
       - ibverbs-utils
       - libibverbs-dev
-      - mpich2
 
 before_script:
   - sh ./.travis_install.sh
@@ -49,7 +48,6 @@ install:
   - pip install -r requirements.txt
 
 script:
-  - which mpicc
   - export PATH=$HOME/zsh/bin:$PATH
   - which zsh
   - autopep8 --diff -r . --global-config .pep8 | tee check_autopep8
